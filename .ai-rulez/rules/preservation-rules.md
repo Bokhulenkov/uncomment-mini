@@ -8,19 +8,18 @@ uncomment supports selective comment preservation. Certain comments must not be 
 
 ## Preserved Comment Types
 
-- **TODO/FIXME markers**: Comments containing `TODO`, `FIXME`, `HACK`, `XXX`, or `NOSONAR`
-- **Linting directives**: Language-specific linting control comments (e.g., `eslint-disable`, `noqa`, `rubocop:disable`, `nolint`, `@suppress`, `swiftlint:`)
+- **TODO/FIXME markers**: Comments containing `TODO` or `FIXME`, unless explicitly requested for removal
+- **C-family and Swift directives**: Comments matching configured preservation patterns, such as `NOLINT` or `swiftlint:`
 - **Keep marker**: Comments containing `~keep` are explicitly marked for preservation
-- **Docstrings**: Language documentation comments (e.g., `///` in Rust, `"""` in Python, `/** */` in Java/TypeScript)
+- **Documentation comments**: Comments such as `///` and `/** */`
 
 ## Configuration
 
-- Preserve patterns are defined per-language in `src/languages/registry.rs` via the `preserve_patterns` field
-- Users can add custom preserve patterns in `.uncommentrc.toml` under `[languages.<name>].preserve_patterns`
+- Built-in preservation patterns are defined in `src/rules/preservation.rs`
+- Users can add preserve patterns in `.uncommentrc.toml` under `[languages.<name>].preserve_patterns` for the four supported languages
 - The preservation rules engine lives in `src/rules/`
 
 ## Guidelines
 
-- When adding a new language, always define appropriate `preserve_patterns` for that language's linting tools
 - Test preservation with edge cases: nested comments, comments at start/end of file, comments on the same line as code
-- The `~keep` marker should work universally across all languages
+- The `~keep` marker should work across all four supported languages

@@ -210,15 +210,14 @@ impl<'a> CommentVisitor<'a> {
     /// directly beneath it.
     ///
     /// `~keep` is plain comment text, so a marker written *inside* a doc comment
-    /// is republished by every tool that consumes doc comments — rustdoc, OpenAPI
-    /// schemas generated from `utoipa`, generated API clients, editor hover text.
+    /// is republished by every tool that consumes doc comments — documentation generators, generated API clients, and editor hover text.
     /// This pass gives the marker a home that never renders: a plain line comment
     /// on its own line, directly above the comment it protects.
     ///
     /// ```text
     /// // ~keep
-    /// /// Parent element ID for hierarchical relationships.
-    /// pub parent_id: Option<String>,
+    /// /** Parent element ID for hierarchical relationships. */
+    /// int parent_id;
     /// ```
     ///
     /// [`Self::extend_keep_blocks`] already covers the case where both the marker
@@ -270,8 +269,7 @@ impl<'a> CommentVisitor<'a> {
 
     /// Whether a comment is documentation, by the same content-based test the
     /// [`PreservationRule::Documentation`] rule applies. Grammar handlers leave
-    /// [`CommentInfo::is_documentation`] unset for most languages — Rust records a
-    /// `///` line as a plain `line_comment` — so the flag alone under-reports.
+    /// [`CommentInfo::is_documentation`] unset for most comments, so the flag alone under-reports.
     fn is_doc_comment(comment: &CommentInfo, content: &str) -> bool {
         PreservationRule::documentation().matches(comment, content)
     }
@@ -349,7 +347,7 @@ impl<'a> CommentVisitor<'a> {
     /// rather than prose *about* the marker.
     ///
     /// Documentation that explains `~keep` — this crate's own docs, a README
-    /// excerpt, a rustdoc example — mentions the token constantly, and rewriting
+    /// excerpt or documentation example — mentions the token constantly, and rewriting
     /// those mentions would corrupt the very documentation this feature exists to
     /// protect. Three cheap signals separate the two:
     ///
@@ -357,7 +355,7 @@ impl<'a> CommentVisitor<'a> {
     /// - A line carrying a backtick is discussing the token, not using it, so
     ///   `` `~keep` `` and `` `/// ~keep Parent element ID.` `` are both left alone.
     /// - A `//` or `#` *inside* the doc text (past the doc marker itself) means the
-    ///   line is a commented-out code sample, as in a rustdoc fenced block.
+    ///   line is a commented-out code sample in a fenced block.
     ///
     /// The bias is deliberate: leaving a real marker in place is a cosmetic miss,
     /// while stripping a word out of prose is data loss.

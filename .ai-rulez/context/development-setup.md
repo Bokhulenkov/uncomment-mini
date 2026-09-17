@@ -32,14 +32,11 @@ cargo test
 # Verbose output
 cargo test -- --nocapture
 
-# Network-dependent tests (grammar loading)
-cargo test -- --ignored
-
 # Specific test file
 cargo test --test integration_tests
 
 # Test on actual files
-cargo run -- fixtures/languages/test.py --dry-run
+cargo run -- fixtures/languages/test.c --dry-run
 ```
 
 ## Lint & Format

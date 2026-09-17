@@ -19,16 +19,15 @@ brew install --verbose goldziher/tap/uncomment
 echo "Testing uncomment command..."
 uncomment --version
 
-cat >/tmp/test_uncomment.py <<'EOF'
-# This is a comment
-def hello():
-    print("Hello, world!")  # Inline comment
-    # Another comment
-    return True
+cat >/tmp/test_uncomment.c <<'EOF'
+// This is a comment
+int hello(void) {
+    return 1; // Inline comment
+}
 EOF
 
 echo "Running uncomment on test file..."
-uncomment --dry-run /tmp/test_uncomment.py
+uncomment --dry-run /tmp/test_uncomment.c
 
 echo "✅ Homebrew formula test completed successfully!"
 

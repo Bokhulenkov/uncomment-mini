@@ -6,10 +6,10 @@
 
 uncomment removes comments from source code using tree-sitter's AST — so it is 100% accurate and
 **never** touches comment-like text inside strings. It keeps what matters by default (TODO/FIXME,
-docs, and linting directives) across **300+ languages**, with parallel processing and a safe dry-run
+docs, and linting directives) in **C, C++, Objective-C, and Swift**, with parallel processing and a safe dry-run
 mode.
 
-AST-accurate&nbsp;·&nbsp;306 languages&nbsp;·&nbsp;zero false positives&nbsp;·&nbsp;smart preservation&nbsp;·&nbsp;parallel&nbsp;·&nbsp;dry-run
+AST-accurate&nbsp;·&nbsp;4 languages&nbsp;·&nbsp;zero false positives&nbsp;·&nbsp;smart preservation&nbsp;·&nbsp;parallel&nbsp;·&nbsp;dry-run
 
 [![crates.io](https://img.shields.io/crates/v/uncomment?style=flat-square&color=2dd4bf)](https://crates.io/crates/uncomment)
 [![npm](https://img.shields.io/npm/v/uncomment-cli?style=flat-square&color=2dd4bf&label=npm)](https://www.npmjs.com/package/uncomment-cli)
@@ -27,18 +27,17 @@ AST-accurate&nbsp;·&nbsp;306 languages&nbsp;·&nbsp;zero false positives&nbsp;�
 ## Why uncomment
 
 Regex-based comment strippers guess. They delete a `//` inside a string literal, mangle a URL in a
-docstring, or leave a linting directive your CI depends on. uncomment doesn't guess: it parses your
+comment, or leave a linting directive your CI depends on. uncomment doesn't guess: it parses your
 code into a real syntax tree and removes only the nodes that are genuinely comments.
 
-Originally built to clean up AI-generated code drowning in explanatory comments, it now works on
-anything with a tree-sitter grammar.
+Originally built to clean up AI-generated code drowning in explanatory comments, it processes C-family and Swift source files.
 
 ## Features
 
 - **100% accurate** — tree-sitter AST parsing identifies comments structurally, not by pattern matching
 - **No false positives** — never removes comment-like content from strings
-- **Smart preservation** — keeps TODO/FIXME, docs, and language-specific linting directives by default
-- **306 languages** — powered by [tree-sitter-language-pack](https://github.com/kreuzberg-dev/tree-sitter-language-pack), grammars downloaded on demand
+- **Smart preservation** — keeps TODO/FIXME, docs, and relevant linting directives by default
+- **4 languages** — C, C++, Objective-C, and Swift via tree-sitter grammars
 - **Parallel** — multi-threaded processing that scales across cores
 - **Safe** — dry-run mode with line-by-line diffs previews every change before you write
 - **Configurable** — hierarchical TOML config with a smart `init` command
@@ -95,19 +94,19 @@ uncomment src/ --dry-run --diff
 
 ```bash
 # Single file
-uncomment file.py
+uncomment file.c
 
 # Multiple files / globs
-uncomment src/*.py
+uncomment src/*.cpp
 
-# Also strip doc comments and docstrings
-uncomment --remove-doc file.py
+# Also strip documentation comments
+uncomment --remove-doc file.c
 
 # Also remove TODO and FIXME comments (preserved by default)
-uncomment --remove-todo --remove-fixme file.py
+uncomment --remove-todo --remove-fixme file.c
 
 # Add custom patterns to preserve
-uncomment --ignore "HACK" --ignore "WARNING" file.py
+uncomment --ignore "HACK" --ignore "WARNING" file.c
 
 # Process an entire tree with all CPU cores
 uncomment . -j 0
@@ -121,10 +120,10 @@ Run `uncomment --help` for the full, grouped list of options.
 The `init` command detects the languages in your project and writes a matching `.uncommentrc.toml`:
 
 ```bash
-# Smart detection — includes only the languages it finds
+# Smart detection — includes detected languages, or all four if none are found
 uncomment init
 
-# All 50 built-in languages
+# All four supported languages
 uncomment init --comprehensive
 
 # Interactive selection
@@ -155,35 +154,9 @@ cargo run --release --features bench-tools --bin profile -- /path/to/repo
 
 ## Supported Languages
 
-uncomment ships with 50 built-in language configurations and can process any of the **306 languages**
-in [tree-sitter-language-pack](https://github.com/kreuzberg-dev/tree-sitter-language-pack) — grammars
-are downloaded automatically on first use, and any language can be added via configuration.
+uncomment processes C (`.c`, `.h`), C++ (`.cpp`, `.cxx`, `.cc`, `.c++`, `.hpp`, `.hxx`, `.hh`, `.h++`), Objective-C (`.m`), and Swift (`.swift`). The `.h` extension uses the C grammar, while `.m` uses Objective-C. Objective-C++ (`.mm`) is unsupported.
 
-<details>
-<summary><b>50 built-in languages</b></summary>
-
-Python (`.py`, `.pyw`, `.pyi`, `.pyx`, `.pxd`) · JavaScript (`.js`, `.jsx`, `.mjs`, `.cjs`) ·
-TypeScript (`.ts`, `.tsx`, `.mts`, `.cts`, `.d.ts`) · Rust (`.rs`) · Go (`.go`) · Java (`.java`) ·
-C (`.c`, `.h`) · C++ (`.cpp`, `.cc`, `.cxx`, `.hpp`, `.hxx`) · C# (`.cs`) ·
-Ruby (`.rb`, `.rake`, `.gemspec`) · PHP (`.php`, `.phtml`) · Elixir (`.ex`, `.exs`) · TOML (`.toml`) ·
-JSON (`.json`) · JSON with Comments (`.jsonc`) · YAML (`.yml`, `.yaml`) ·
-HCL/Terraform (`.hcl`, `.tf`, `.tfvars`) · Makefile (`Makefile`, `.mk`) ·
-Shell/Bash (`.sh`, `.bash`, `.zsh`) · Haskell (`.hs`, `.lhs`) · HTML (`.html`, `.htm`, `.xhtml`) ·
-CSS (`.css`) · XML (`.xml`, `.xsd`, `.xsl`, `.xslt`, `.svg`) · SQL (`.sql`) · Kotlin (`.kt`, `.kts`) ·
-Objective-C (`.m`) · Swift (`.swift`) · Lua (`.lua`) · Nix (`.nix`) · PowerShell (`.ps1`, `.psm1`, `.psd1`) ·
-Protobuf (`.proto`) · INI-like configs (`.ini`, `.cfg`, `.conf`) · Dockerfile (`Dockerfile`) ·
-Scala (`.scala`, `.sc`) · Dart (`.dart`) · R (`.r`, `.R`) · Julia (`.jl`) · Zig (`.zig`) ·
-Clojure (`.clj`, `.cljs`, `.cljc`, `.edn`) · Elm (`.elm`) · Erlang (`.erl`, `.hrl`) · Vue (`.vue`) ·
-Svelte (`.svelte`) · SCSS (`.scss`) · LaTeX (`.tex`, `.sty`, `.cls`) · Fish (`.fish`) ·
-Perl (`.pl`, `.pm`) · Groovy (`.groovy`, `.gradle`) · OCaml (`.ml`, `.mli`) ·
-Fortran (`.f90`, `.f95`, `.f03`, `.f08`)
-
-</details>
-
-Objective-C uses the `objc` grammar. The `.m` extension is also used by MATLAB;
-Uncomment treats it as Objective-C by default. When processing a mixed project,
-pass only the Objective-C paths. Headers (`.h`) retain the C configuration;
-Objective-C++ (`.mm`) is not included in built-in support.
+CLI file selection and the processor use the same built-in extension registry. TOML language settings can adjust preservation options for those four languages, but cannot register another language or extension.
 
 ## Preservation Rules
 
@@ -200,16 +173,15 @@ teammates rely on.
 
 Put `~keep` on a `//`-style comment, not on a `///` or `/** */` doc comment. `~keep` is
 plain comment text, so a marker written inside a doc comment is republished by every tool
-that consumes doc comments — rustdoc, OpenAPI schemas, generated API clients, editor
-hover text.
+that consumes documentation comments — documentation generators and editor hover text.
 
 A marker on its own line protects the comment directly beneath it, which keeps it out of
 anything rendered:
 
-```rust
+```c
 // ~keep
-/// Parent element ID for hierarchical relationships.
-pub parent_id: Option<String>,
+/** Parent element ID for hierarchical relationships. */
+int parent_id;
 ```
 
 The marker also extends across a contiguous run of comments, so one `~keep` protects a
@@ -224,20 +196,9 @@ the only thing protecting that doc comment, and prose *about* the marker is neve
 rather than as a directive.
 
 <details>
-<summary><b>Linting &amp; formatter directives (always preserved)</b></summary>
+<summary><b>Linting &amp; formatter directives</b></summary>
 
-| Language      | Directives                                                                                                                                                           |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Go            | `//nolint`, `//golangci-lint`, `//staticcheck`, `//go:generate`                                                                                                      |
-| Python        | `# noqa`, `# type: ignore`, `# mypy:`, `# pyright:`, `# ruff:`, `# pylint:`, `# flake8:`, `# fmt: off/on`, `# black:`, `# isort:`, `# bandit:`, `# pyre-ignore`      |
-| JS/TS         | `eslint-disable*`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, `/// <reference`, `prettier-ignore`, `biome-ignore`, `deno-lint-ignore`, `v8/c8/istanbul ignore` |
-| Rust          | `#[allow]`, `#[deny]`, `#[warn]`, `#[forbid]`, `#[cfg]`, `clippy::`, `#[rustfmt::skip]`                                                                              |
-| Java          | `@SuppressWarnings`, `@SuppressFBWarnings`, `//noinspection`, `// checkstyle:`                                                                                       |
-| C/C++         | `// NOLINT`, `// NOLINTNEXTLINE`, `#pragma`, `// clang-format off/on`                                                                                                |
-| Shell         | `# shellcheck disable`, `# hadolint ignore`                                                                                                                          |
-| YAML          | `# yamllint disable/enable`                                                                                                                                          |
-| HCL/Terraform | `# tfsec:ignore`, `# checkov:skip`, `# trivy:ignore`, `# tflint-ignore`                                                                                              |
-| Ruby          | `# rubocop:disable/enable`, `# reek:`, `# standard:disable/enable`                                                                                                   |
+C, C++, and Objective-C preserve common directives such as `NOLINT`, `#pragma`, and `clang-format off/on`. Swift preserves `swiftlint:` and `MARK:`. The `--no-default-ignores` flag disables these default patterns.
 
 </details>
 
@@ -259,32 +220,14 @@ preserve_patterns = ["IMPORTANT", "NOTE", "WARNING"]
 use_default_ignores = true
 respect_gitignore = true
 
-[languages.python]
-extensions = ["py", "pyw", "pyi"]
-preserve_patterns = ["noqa", "type:", "pragma:", "pylint:"]
+[languages.swift]
+preserve_patterns = ["swiftlint:"]
 
-[patterns."tests/**/*.py"]
-# Keep all comments in test files
+[patterns."tests/**/*.swift"]
 remove_todos = false
-remove_fixme = false
-remove_docs = false
 ```
 
-<details>
-<summary><b>Adding a language via configuration</b></summary>
-
-Any of the 306 tree-sitter-language-pack languages works — grammars download automatically on first
-use, no manual grammar setup:
-
-```toml
-[languages.hare]
-name = "Hare"
-extensions = ["ha"]
-comment_nodes = ["comment"]
-preserve_patterns = ["TODO", "FIXME"]
-```
-
-</details>
+Language names and extensions remain fixed by the built-in registry; configuration entries only supply preservation options for those languages.
 
 ## How It Works
 
@@ -296,7 +239,7 @@ tree-sitter, so it distinguishes:
 - Inline comments vs standalone comments
 - Language-specific metadata that must be preserved
 
-The pipeline is modular: a **language registry** (50 built-ins + on-demand grammars) feeds an
+The pipeline is modular: a **language registry** (four built-ins) feeds an
 **AST visitor** that finds comment nodes, a **preservation engine** decides what to keep, and an
 **output generator** emits clean code.
 
@@ -341,15 +284,13 @@ AST parsing costs a little more than regex, but the tool is fast and scales well
 | 4       | 3,900        | 2.6×    |
 | 8       | 5,100        | 3.4×    |
 
-*Benchmarked on a large enterprise codebase of ~5,000 mixed-language files.* Measure your own with
-the built-in `benchmark` and `profile` tools (see [optional benchmarking tools](#usage)).
+*Benchmark results are historical.* Measure your own workload with the built-in `benchmark` and `profile` tools (see [optional benchmarking tools](#usage)).
 
 ## Development
 
 ```bash
 cargo build              # Debug build
 cargo test               # Run the test suite
-cargo test -- --ignored  # Include network-dependent tests
 cargo clippy             # Lint
 cargo fmt --all          # Format
 ```

@@ -1,0 +1,24 @@
+[global]
+remove_todos = true
+remove_fixme = true
+remove_docs = false
+preserve_patterns = ["HACK", "WORKAROUND", "NOTE"]
+use_default_ignores = false
+respect_gitignore = true
+traverse_git_repos = false
+
+[languages.c]
+
+[languages.cpp]
+
+[languages.swift]
+name = "Swift"
+extensions = [".swift"]
+comment_nodes = ["comment", "multiline_comment"]
+preserve_patterns = []
+[languages.objc]
+name = "ObjC"
+extensions = [".m"]
+comment_nodes = ["comment"]
+doc_comment_nodes = ["comment"]
+preserve_patterns = []

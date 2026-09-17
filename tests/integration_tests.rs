@@ -15,8 +15,8 @@ fn test_gitignore_from_subdirectory() {
 
     fs::write(root.join(".gitignore"), ".next\n").unwrap();
 
-    fs::write(subfolder.join("main.js"), "// Main file comment\nconst x = 1;").unwrap();
-    fs::write(next_folder.join("test.js"), "// Test file comment\nconst y = 2;").unwrap();
+    fs::write(subfolder.join("main.c"), "// Main file comment\nint x = 1;").unwrap();
+    fs::write(next_folder.join("test.c"), "// Test file comment\nint y = 2;").unwrap();
 
     Command::new("git").current_dir(root).args(["init"]).output().unwrap();
 
@@ -47,13 +47,13 @@ fn test_gitignore_from_subdirectory() {
         stdout
     );
     assert!(
-        stdout.contains("main.js"),
-        "Expected to process main.js, but got: {}",
+        stdout.contains("main.c"),
+        "Expected to process main.c, but got: {}",
         stdout
     );
     assert!(
-        !stdout.contains("test.js"),
-        "Should not process test.js in .next folder, but got: {}",
+        !stdout.contains("test.c"),
+        "Should not process test.c in .next folder, but got: {}",
         stdout
     );
 }
@@ -71,8 +71,8 @@ fn test_gitignore_with_no_gitignore_flag() {
 
     fs::write(root.join(".gitignore"), ".next\n").unwrap();
 
-    fs::write(subfolder.join("main.js"), "// Main file comment\nconst x = 1;").unwrap();
-    fs::write(next_folder.join("test.js"), "// Test file comment\nconst y = 2;").unwrap();
+    fs::write(subfolder.join("main.c"), "// Main file comment\nint x = 1;").unwrap();
+    fs::write(next_folder.join("test.c"), "// Test file comment\nint y = 2;").unwrap();
 
     Command::new("git").current_dir(root).args(["init"]).output().unwrap();
 
@@ -124,7 +124,7 @@ fn test_config_init_command() {
     let config_content = fs::read_to_string(&config_path).unwrap();
     assert!(config_content.contains("[global]"));
     assert!(config_content.contains("remove_todos = false"));
-    assert!(config_content.contains("[languages.python]"));
+    assert!(config_content.contains("[languages.c]"));
     assert!(config_content.contains("[patterns."));
 }
 
@@ -144,14 +144,13 @@ preserve_patterns = ["KEEP"]
 
     fs::write(root.join(".uncommentrc.toml"), config_content).unwrap();
 
-    let test_file = root.join("test.py");
-    let test_content = r#"# Header comment
-# TODO: should be removed
-# FIXME: should be preserved
-# KEEP: should be preserved
-# Regular comment
-def hello():
-    pass"#;
+    let test_file = root.join("test.c");
+    let test_content = r#"// Header comment
+// TODO: should be removed
+// FIXME: should be preserved
+// KEEP: should be preserved
+// Regular comment
+int hello(void) { return 0; }"#;
 
     fs::write(&test_file, test_content).unwrap();
 
@@ -159,7 +158,7 @@ def hello():
 
     let output = Command::new(&uncomment_path)
         .current_dir(root)
-        .args(["test.py"])
+        .args(["test.c"])
         .output()
         .unwrap();
 
@@ -179,8 +178,8 @@ def hello():
 
     assert!(result_content.contains("KEEP: should be preserved"));
 
-    assert!(!result_content.contains("# Header comment"));
-    assert!(!result_content.contains("# Regular comment"));
+    assert!(!result_content.contains("// Header comment"));
+    assert!(!result_content.contains("// Regular comment"));
 }
 
 #[test]
@@ -207,10 +206,10 @@ remove_fixme = false
 "#;
     fs::write(subdir.join(".uncommentrc.toml"), sub_config).unwrap();
 
-    let root_file = root.join("root_test.py");
-    let sub_file = subdir.join("sub_test.py");
+    let root_file = root.join("root_test.c");
+    let sub_file = subdir.join("sub_test.c");
 
-    let test_content = "# TODO: test comment\n# FIXME: test comment\ndef hello(): pass";
+    let test_content = "// TODO: test comment\n// FIXME: test comment\nint hello(void) { return 0; }";
     fs::write(&root_file, test_content).unwrap();
     fs::write(&sub_file, test_content).unwrap();
 
@@ -218,7 +217,7 @@ remove_fixme = false
 
     let output = Command::new(&uncomment_path)
         .current_dir(root)
-        .args(["root_test.py", "subdir/sub_test.py"])
+        .args(["root_test.c", "subdir/sub_test.c"])
         .output()
         .unwrap();
 
@@ -252,99 +251,6 @@ remove_fixme = false
 }
 
 #[test]
-fn test_language_specific_configuration() {
-    let temp_dir = TempDir::new().unwrap();
-    let root = temp_dir.path();
-
-    let config_content = r#"
-[global]
-remove_todos = false
-remove_docs = false
-
-[languages.python]
-name = "Python"
-extensions = [".py"]
-comment_nodes = ["comment"]
-doc_comment_nodes = ["string"]
-preserve_patterns = ["mypy:", "type:"]
-remove_docs = true
-
-[languages.javascript]
-name = "JavaScript"
-extensions = [".js"]
-comment_nodes = ["comment"]
-preserve_patterns = ["@ts-ignore"]
-"#;
-
-    fs::write(root.join(".uncommentrc.toml"), config_content).unwrap();
-
-    let py_file = root.join("test.py");
-    let py_content = r#""""This is a docstring"""
-# TODO: regular todo
-# mypy: ignore
-def hello(): pass"#;
-    fs::write(&py_file, py_content).unwrap();
-
-    let js_file = root.join("test.js");
-    let js_content = r#"/**
- * This is a JSDoc comment
- */
-// TODO: regular todo
-// @ts-ignore
-const x = 1;"#;
-    fs::write(&js_file, js_content).unwrap();
-
-    let uncomment_path = get_binary_path();
-
-    let output = Command::new(&uncomment_path)
-        .current_dir(root)
-        .args(["test.py", "test.js"])
-        .output()
-        .unwrap();
-
-    if !output.status.success() {
-        eprintln!("Command failed with exit code: {:?}", output.status.code());
-        eprintln!("stderr: {}", String::from_utf8_lossy(&output.stderr));
-        eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-    }
-    assert!(
-        output.status.success(),
-        "Command failed: stderr={}, stdout={}",
-        String::from_utf8_lossy(&output.stderr),
-        String::from_utf8_lossy(&output.stdout)
-    );
-
-    let py_result = fs::read_to_string(&py_file).unwrap();
-    assert!(
-        !py_result.contains("This is a docstring"),
-        "Python docstring should be removed"
-    );
-    assert!(
-        py_result.contains("TODO: regular todo"),
-        "Python TODO should be preserved (global setting)"
-    );
-    assert!(
-        py_result.contains("mypy: ignore"),
-        "Python mypy comment should be preserved"
-    );
-
-    // Check JavaScript file - JSDoc should be preserved, @ts-ignore preserved
-    let js_result = fs::read_to_string(&js_file).unwrap();
-    assert!(
-        js_result.contains("This is a JSDoc comment"),
-        "JavaScript JSDoc should be preserved (global setting)"
-    );
-    assert!(
-        js_result.contains("TODO: regular todo"),
-        "JavaScript TODO should be preserved (global setting)"
-    );
-    assert!(
-        js_result.contains("@ts-ignore"),
-        "JavaScript @ts-ignore should be preserved"
-    );
-}
-
-#[test]
 fn test_custom_config_file_path() {
     let temp_dir = TempDir::new().unwrap();
     let root = temp_dir.path();
@@ -358,15 +264,15 @@ preserve_patterns = ["CUSTOM"]
     let custom_config_path = root.join("my_custom_config.toml");
     fs::write(&custom_config_path, custom_config).unwrap();
 
-    let test_file = root.join("test.py");
-    let test_content = "# TODO: should be removed\n# CUSTOM: should be preserved\ndef hello(): pass";
+    let test_file = root.join("test.c");
+    let test_content = "// TODO: should be removed\n// CUSTOM: should be preserved\nint hello(void) { return 0; }";
     fs::write(&test_file, test_content).unwrap();
 
     let uncomment_path = get_binary_path();
 
     let output = Command::new(&uncomment_path)
         .current_dir(root)
-        .args(["--config", "my_custom_config.toml", "test.py"])
+        .args(["--config", "my_custom_config.toml", "test.c"])
         .output()
         .unwrap();
 
@@ -385,70 +291,6 @@ preserve_patterns = ["CUSTOM"]
 }
 
 #[test]
-fn test_pattern_based_configuration() {
-    let temp_dir = TempDir::new().unwrap();
-    let root = temp_dir.path();
-
-    let config_content = r#"
-[global]
-remove_todos = false
-remove_docs = false
-
-[patterns."test_*.py"]
-remove_todos = true
-remove_docs = true
-
-[patterns."src/*.py"]
-preserve_patterns = ["PRODUCTION"]
-"#;
-
-    fs::write(root.join(".uncommentrc.toml"), config_content).unwrap();
-
-    fs::create_dir(root.join("src")).unwrap();
-
-    let test_file = root.join("test_example.py");
-    let src_file = root.join("src").join("main.py");
-    let regular_file = root.join("regular.py");
-
-    let file_content = r#"""
-Docstring
-"""
-# TODO: todo comment
-# PRODUCTION: prod comment
-def hello(): pass"#;
-
-    fs::write(&test_file, file_content).unwrap();
-    fs::write(&src_file, file_content).unwrap();
-    fs::write(&regular_file, file_content).unwrap();
-
-    let uncomment_path = get_binary_path();
-
-    let output = Command::new(&uncomment_path)
-        .current_dir(root)
-        .args(["test_example.py", "src/main.py", "regular.py"])
-        .output()
-        .unwrap();
-
-    assert!(
-        output.status.success(),
-        "Command failed: {}",
-        String::from_utf8_lossy(&output.stderr)
-    );
-
-    let test_result = fs::read_to_string(&test_file).unwrap();
-    let src_result = fs::read_to_string(&src_file).unwrap();
-    let regular_result = fs::read_to_string(&regular_file).unwrap();
-
-    // All should preserve TODO and docs due to global config
-    assert!(test_result.contains("TODO: todo comment"));
-    assert!(test_result.contains("Docstring"));
-    assert!(src_result.contains("TODO: todo comment"));
-    assert!(src_result.contains("Docstring"));
-    assert!(regular_result.contains("TODO: todo comment"));
-    assert!(regular_result.contains("Docstring"));
-}
-
-#[test]
 fn test_config_validation_errors() {
     let temp_dir = TempDir::new().unwrap();
     let root = temp_dir.path();
@@ -461,13 +303,13 @@ invalid_syntax_here
 
     fs::write(root.join(".uncommentrc.toml"), invalid_config).unwrap();
 
-    fs::write(root.join("test.py"), "# comment\ndef hello(): pass").unwrap();
+    fs::write(root.join("test.c"), "// comment\nint hello(void) { return 0; }").unwrap();
 
     let uncomment_path = get_binary_path();
 
     let output = Command::new(&uncomment_path)
         .current_dir(root)
-        .args(["--config", ".uncommentrc.toml", "test.py"])
+        .args(["--config", ".uncommentrc.toml", "test.c"])
         .output()
         .unwrap();
 
@@ -496,15 +338,15 @@ remove_todos = false
 
     fs::write(root.join(".uncommentrc.toml"), config_content).unwrap();
 
-    let test_file = root.join("test.py");
-    fs::write(&test_file, "# TODO: test comment\ndef hello(): pass").unwrap();
+    let test_file = root.join("test.c");
+    fs::write(&test_file, "// TODO: test comment\nint hello(void) { return 0; }").unwrap();
 
     let uncomment_path = get_binary_path();
 
     // Run with CLI flag that would remove TODOs (CLI should override config in future)
     let output = Command::new(&uncomment_path)
         .current_dir(root)
-        .args(["--remove-todo", "test.py"])
+        .args(["--remove-todo", "test.c"])
         .output()
         .unwrap();
 
@@ -517,10 +359,13 @@ remove_todos = false
     // CLI --remove-todo overrides config, so TODO should be removed
     let result = fs::read_to_string(&test_file).unwrap();
     assert!(
-        !result.contains("# TODO: test comment"),
+        !result.contains("// TODO: test comment"),
         "CLI --remove-todo should override config and remove TODO comments"
     );
-    assert!(result.contains("def hello(): pass"), "Code should be preserved");
+    assert!(
+        result.contains("int hello(void) { return 0; }"),
+        "Code should be preserved"
+    );
 }
 
 fn get_binary_path() -> std::path::PathBuf {

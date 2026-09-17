@@ -40,5 +40,5 @@
   <line x1="470" y1="230" x2="730" y2="230" stroke="url(#rule)" stroke-width="2"/>
 
   <!-- feature line -->
-  <text x="600" y="268" text-anchor="middle" font-family="'SF Pro Text','DejaVu Sans',ui-sans-serif,system-ui,sans-serif" font-size="14" fill="#6b7280" letter-spacing="2.5">AST-ACCURATE &#183; 306 LANGUAGES &#183; ZERO FALSE POSITIVES &#183; SMART PRESERVATION</text>
+  <text x="600" y="268" text-anchor="middle" font-family="'SF Pro Text','DejaVu Sans',ui-sans-serif,system-ui,sans-serif" font-size="14" fill="#6b7280" letter-spacing="2.5">AST-ACCURATE &#183; 4 LANGUAGES &#183; ZERO FALSE POSITIVES &#183; SMART PRESERVATION</text>
 </svg>

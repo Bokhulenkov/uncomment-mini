@@ -124,7 +124,7 @@ fn main() -> Result<()> {
     };
 
     let process_file = |file_path: &PathBuf| -> Option<processor::ProcessedFile> {
-        let mut proc = processor::Processor::new_with_config(&config_manager);
+        let mut proc = processor::Processor::new();
         let result = match proc.process_file_with_config(file_path, &config_manager, Some(&options)) {
             Ok(mut pf) => {
                 pf.modified = pf.original_content != pf.processed_content;
@@ -408,7 +408,6 @@ fn supported_extensions_message() -> String {
         .into_iter()
         .map(|ext| format!(".{ext}"))
         .collect();
-    extensions.push(".d.ts".to_string());
     extensions.sort();
     extensions.dedup();
 

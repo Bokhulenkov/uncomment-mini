@@ -1,9 +1,6 @@
 use std::fs;
 use tempfile::TempDir;
-use uncomment::{
-    config::{Config, ConfigManager, LanguageConfig},
-    processor::Processor,
-};
+use uncomment::{config::ConfigManager, processor::Processor};
 
 /// Test error handling for malformed configuration files
 #[test]
@@ -16,8 +13,8 @@ fn test_malformed_config_error_handling() {
 remove_docs = true  # Missing closing bracket
 invalid_field = "value"
 
-[languages.rust
-name = "Rust"  # Missing closing bracket
+[languages.c
+name = "C"  # Missing closing bracket
 "#;
 
     fs::write(&config_path, malformed_config).unwrap();
@@ -55,56 +52,13 @@ fn test_processor_nonexistent_file_error() {
     let config_manager = ConfigManager::new(temp_dir.path()).unwrap();
     let mut processor = Processor::new();
 
-    let nonexistent_file = temp_dir.path().join("nonexistent.rs");
+    let nonexistent_file = temp_dir.path().join("nonexistent.c");
 
     let result = processor.process_file_with_config(&nonexistent_file, &config_manager, None);
     assert!(result.is_err());
 
     let error_msg = result.unwrap_err().to_string();
     assert!(error_msg.contains("Failed to read file"));
-}
-
-/// Test error handling for configuration validation edge cases
-#[test]
-fn test_config_validation_edge_cases() {
-    let mut config = Config::default();
-
-    let invalid_language = LanguageConfig {
-        name: "".to_string(),
-        extensions: vec!["test".to_string()],
-        comment_nodes: vec!["comment".to_string()],
-        doc_comment_nodes: vec![],
-        preserve_patterns: vec![],
-        remove_todos: None,
-        remove_fixme: None,
-        remove_docs: None,
-        use_default_ignores: None,
-    };
-
-    config.languages.insert("empty_name".to_string(), invalid_language);
-
-    let validation_result = config.validate();
-    assert!(validation_result.is_err());
-
-    let mut config2 = Config::default();
-    let no_comments_language = LanguageConfig {
-        name: "test".to_string(),
-        extensions: vec!["test".to_string()],
-        comment_nodes: vec![],
-        doc_comment_nodes: vec![],
-        preserve_patterns: vec![],
-        remove_todos: None,
-        remove_fixme: None,
-        remove_docs: None,
-        use_default_ignores: None,
-    };
-
-    config2
-        .languages
-        .insert("no_comments".to_string(), no_comments_language);
-
-    let validation_result2 = config2.validate();
-    assert!(validation_result2.is_err());
 }
 
 /// Test error recovery and graceful degradation
@@ -117,10 +71,7 @@ fn test_error_recovery_mechanisms() {
 [global]
 remove_docs = false
 
-[languages.rust]
-name = "Rust"
-extensions = ["rs"]
-comment_nodes = ["line_comment", "block_comment"]
+[languages.c]
 "#;
 
     fs::write(&config_path, config).unwrap();
@@ -128,11 +79,11 @@ comment_nodes = ["line_comment", "block_comment"]
     let config_manager = ConfigManager::new(temp_dir.path()).unwrap();
     let mut processor = Processor::new();
 
-    let rust_file = temp_dir.path().join("test.rs");
-    fs::write(&rust_file, "// Comment\nfn main() {}").unwrap();
+    let c_file = temp_dir.path().join("test.c");
+    fs::write(&c_file, "// Comment\nint main(void) {}").unwrap();
 
-    let rust_result = processor.process_file_with_config(&rust_file, &config_manager, None);
-    assert!(rust_result.is_ok());
+    let c_result = processor.process_file_with_config(&c_file, &config_manager, None);
+    assert!(c_result.is_ok());
 
     let unknown_file = temp_dir.path().join("test.xyz");
     fs::write(&unknown_file, "// Comment").unwrap();

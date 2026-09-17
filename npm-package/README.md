@@ -1,17 +1,8 @@
-# uncomment-cli
+# uncomment
 
-[![npm](https://img.shields.io/npm/v/uncomment-cli?style=flat-square&color=2dd4bf&label=npm)](https://www.npmjs.com/package/uncomment-cli)
-[![License: MIT](https://img.shields.io/badge/License-MIT-2dd4bf?style=flat-square)](https://github.com/Goldziher/uncomment/blob/main/LICENSE)
+A Rust-based CLI that removes comments from C, C++, Objective-C, and Swift source using tree-sitter.
 
-A blazing fast Rust-based command-line tool that removes comments from your source code. Perfect for cleaning up AI-generated code that comes with excessive explanations.
-
-## Why Use This?
-
-- 🚀 **Lightning Fast** - Built in Rust for maximum performance
-- 🎯 **100% Accurate** - Never accidentally removes code that looks like comments
-- 🛡️ **Safe by Default** - Preview changes before applying them
-- 🌍 **Multi-language** - 49 built-in languages, 306 available via [tree-sitter-language-pack](https://github.com/kreuzberg-dev/tree-sitter-language-pack)
-- 🔧 **Zero Dependencies** - Downloads a self-contained binary
+Supported extensions: `.c`, `.h`, `.cpp`, `.cxx`, `.cc`, `.c++`, `.hpp`, `.hxx`, `.hh`, `.h++`, `.m`, and `.swift`. `.mm` is unsupported. TOML configuration can adjust preservation behavior for these languages; it cannot register other languages or extensions.
 
 ## Installation
 
@@ -19,83 +10,14 @@ A blazing fast Rust-based command-line tool that removes comments from your sour
 npm install -g uncomment-cli
 ```
 
-The installer will automatically download the appropriate pre-compiled Rust binary for your platform (Windows, macOS, or Linux).
+This package installs or invokes the Rust binary. The package implementation language does not affect which source files the binary processes.
 
-## Quick Start
-
-Remove comments from a single file:
+## Usage
 
 ```bash
-uncomment main.py
-```
-
-Preview changes without modifying files:
-
-```bash
+uncomment main.c
 uncomment --dry-run src/
+uncomment --remove-doc api.swift
 ```
 
-Process all Python files in a directory:
-
-```bash
-uncomment "src/**/*.py"
-```
-
-## Key Features
-
-### Smart Comment Detection
-
-Unlike simple regex-based tools, `uncomment` understands your code's structure:
-
-```python
-# This comment will be removed
-code = "# But this won't - it's in a string!"
-```
-
-### Preserves Important Comments
-
-Keeps what matters:
-
-- `TODO` and `FIXME` comments (configurable)
-- License headers and copyright notices
-- Linting directives (`eslint-disable`, `@ts-ignore`, etc.)
-- Documentation strings and JSDoc comments (configurable)
-
-### Supported Languages
-
-49 built-in languages including Python, JavaScript, TypeScript, Rust, Go, Java, C/C++, Ruby, Dockerfile, Scala, Dart, and many more. 306 total languages available via [tree-sitter-language-pack](https://github.com/kreuzberg-dev/tree-sitter-language-pack).
-
-## Common Use Cases
-
-**Clean up AI-generated code:**
-
-```bash
-uncomment generated_code.js
-```
-
-**Remove all comments including TODOs:**
-
-```bash
-uncomment --remove-todo --remove-fixme src/
-```
-
-**Remove documentation comments:**
-
-```bash
-uncomment --remove-doc api.ts
-```
-
-**Use multiple threads for large codebases:**
-
-```bash
-uncomment --threads 8 entire_project/
-```
-
-## Documentation
-
-For detailed documentation, advanced options, and examples, visit:
-[https://github.com/Goldziher/uncomment](https://github.com/Goldziher/uncomment)
-
-## License
-
-MIT - see [LICENSE](https://github.com/Goldziher/uncomment/blob/main/LICENSE) for details.
+See the [project documentation](https://github.com/Goldziher/uncomment) for options and configuration.

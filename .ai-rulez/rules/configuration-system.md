@@ -17,12 +17,12 @@ uncomment uses a hierarchical TOML-based configuration system with layered prece
 
 - Configuration is managed in `src/config.rs` via the `Config` struct
 - Uses `serde` for TOML deserialization
-- Template methods (`template()`, `smart_template()`, `comprehensive_template()`) generate example configs
+- `template_clean()` generates the complete four-language config; `smart_template_with_info()` generates a config for detected C, C++, Objective-C, and Swift files; `interactive_template_clean()` prompts for those languages
 
 ## Guidelines
 
 - When adding new config options, update the `Config` struct in `src/config.rs`
-- Add the option to all template methods so users can discover it
+- Add the option to the generated templates so users can discover it
 - Document new options in the `examples/` directory
 - Always provide sensible defaults — the tool should work with zero configuration
 - Use `serde(default)` for optional fields to ensure backward compatibility

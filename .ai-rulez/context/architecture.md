@@ -14,10 +14,9 @@ uncomment is a Rust CLI tool for AST-based comment removal from source code, dis
 - `processor.rs` — Main file processing logic (orchestrates parsing, detection, removal)
 - `ast/` — AST visitor pattern for tree traversal and comment detection
   - `visitor.rs` — Core visitor implementation
-- `grammar/` — Tree-sitter grammar loading and management
-  - `mod.rs` — Static grammar registry (`static_languages()` HashMap), dynamic loader
 - `languages/` — Language definitions and registry
-  - `registry.rs` — Language configurations (extensions, comment nodes, preserve patterns)
+  - `config.rs` — C, C++, Objective-C, and Swift parser definitions
+  - `registry.rs` — Built-in language and extension lookup
 - `rules/` — Comment preservation rule engine
 
 ## Distribution
@@ -32,7 +31,7 @@ uncomment is a Rust CLI tool for AST-based comment removal from source code, dis
 ## Testing
 
 - `tests/` — Integration tests
-- `fixtures/languages/` — Test source files for each supported language
+- `fixtures/languages/` — C, C++, Objective-C, and Swift samples
 - Unit tests are co-located in source files using `#[cfg(test)]`
 
 ## Configuration Files
@@ -44,4 +43,3 @@ uncomment is a Rust CLI tool for AST-based comment removal from source code, dis
 ## Build Artifacts
 
 - `target/` — Cargo build output (gitignored)
-- `~/.cache/uncomment/grammars/` — Cached compiled grammars (runtime)

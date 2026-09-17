@@ -150,9 +150,12 @@ struct ProcessResult {
 
 fn collect_files(path: &PathBuf) -> anyhow::Result<Vec<PathBuf>> {
     let mut files = Vec::new();
+    let registry = uncomment::languages::LanguageRegistry::new();
 
     if path.is_file() {
-        files.push(path.clone());
+        if registry.detect_language(path).is_some() {
+            files.push(path.clone());
+        }
     } else if path.is_dir() {
         use walkdir::WalkDir;
 
@@ -161,39 +164,8 @@ fn collect_files(path: &PathBuf) -> anyhow::Result<Vec<PathBuf>> {
             .into_iter()
             .filter_map(|e| e.ok())
         {
-            if entry.file_type().is_file()
-                && let Some(ext) = entry.path().extension()
-            {
-                let ext_str = ext.to_string_lossy();
-                let supported = matches!(
-                    ext_str.as_ref(),
-                    "py" | "pyw"
-                        | "pyi"
-                        | "js"
-                        | "jsx"
-                        | "mjs"
-                        | "cjs"
-                        | "ts"
-                        | "tsx"
-                        | "mts"
-                        | "cts"
-                        | "rs"
-                        | "go"
-                        | "java"
-                        | "c"
-                        | "h"
-                        | "cpp"
-                        | "cc"
-                        | "cxx"
-                        | "hpp"
-                        | "hxx"
-                        | "rb"
-                        | "rake"
-                );
-
-                if supported {
-                    files.push(entry.path().to_path_buf());
-                }
+            if entry.file_type().is_file() && registry.detect_language(entry.path()).is_some() {
+                files.push(entry.path().to_path_buf());
             }
         }
     }
@@ -205,7 +177,7 @@ fn run_uncomment(files: &[PathBuf]) -> anyhow::Result<Duration> {
     let start = Instant::now();
 
     let config_manager = uncomment::config::ConfigManager::new(std::env::current_dir()?)?;
-    let mut processor = uncomment::processor::Processor::new_with_config(&config_manager);
+    let mut processor = uncomment::processor::Processor::new();
     let options = uncomment::processor::ProcessingOptions {
         remove_todo: false,
         remove_fixme: false,
@@ -227,7 +199,7 @@ fn run_uncomment(files: &[PathBuf]) -> anyhow::Result<Duration> {
 
 fn run_uncomment_with_stats(files: &[PathBuf]) -> anyhow::Result<ProcessResult> {
     let config_manager = uncomment::config::ConfigManager::new(std::env::current_dir()?)?;
-    let mut processor = uncomment::processor::Processor::new_with_config(&config_manager);
+    let mut processor = uncomment::processor::Processor::new();
     let options = uncomment::processor::ProcessingOptions {
         remove_todo: false,
         remove_fixme: false,

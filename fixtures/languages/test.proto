@@ -1,3 +1,0 @@
-// Proto comment
-syntax = "proto3";
-message A {}

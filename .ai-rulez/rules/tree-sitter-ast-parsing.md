@@ -9,16 +9,14 @@ All comment identification and removal MUST use tree-sitter AST parsing. Never u
 ## Core Principles
 
 - Use the AST visitor pattern in `src/ast/visitor.rs` for tree traversal
-- Define `comment_nodes` for each language in `src/languages/registry.rs` or via configuration
+- Define comment node types for the four languages in `src/languages/config.rs`
 - Cache parsed trees when processing multiple operations on the same file
 - Handle tree-sitter query errors gracefully with descriptive error messages
 
 ## Implementation Guidelines
 
-- When adding language support, identify the correct tree-sitter node types for comments (e.g., `comment`, `line_comment`, `block_comment`, `multiline_comment`)
-- Use `tree-sitter parse <file>` to inspect AST structure and discover comment node names
+- Keep the existing C, C++, Objective-C, and Swift comment node types aligned with their grammars
 - Ensure multi-byte UTF-8 content is handled correctly during byte-offset to character-offset conversion
-- Tree-sitter parsing takes ~20-30ms per small file vs instant regex — always prioritize accuracy over speed
 
 ## Prohibited Patterns
 

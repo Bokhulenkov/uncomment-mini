@@ -6,7 +6,6 @@ pub enum PreservationRule {
     Pattern(Cow<'static, str>),
     Documentation,
     FileHeader,
-    Shebang,
 }
 
 impl PreservationRule {
@@ -15,7 +14,6 @@ impl PreservationRule {
             PreservationRule::Pattern(pattern) => content.contains(pattern.as_ref()),
             PreservationRule::Documentation => self.is_documentation_comment(comment, content),
             PreservationRule::FileHeader => self.is_file_header_comment(comment, content),
-            PreservationRule::Shebang => self.is_shebang(comment, content),
         }
     }
 
@@ -26,41 +24,15 @@ impl PreservationRule {
         }
     }
 
-    fn is_shebang(&self, comment: &CommentInfo, content: &str) -> bool {
-        if comment.node_type.contains("shebang") {
-            return true;
-        }
-
-        let trimmed = content.trim_start();
-        trimmed.starts_with("#!")
-    }
-
     fn is_documentation_comment(&self, comment: &CommentInfo, content: &str) -> bool {
         if comment.is_documentation {
             return true;
         }
 
-        let doc_patterns = [
-            "/**",
-            "///",
-            "//!",
-            "##",
-            "\"\"\"",
-            "doc_comment",
-            "documentation_comment",
-            "inner_doc_comment",
-            "outer_doc_comment",
-        ];
+        let doc_patterns = ["/**", "///", "//!"];
 
         if doc_patterns.iter().any(|&pattern| comment.node_type.contains(pattern)) {
             return true;
-        }
-
-        if comment.node_type == "string" {
-            let trimmed = content.trim();
-            if trimmed.starts_with("\"\"\"") || trimmed.starts_with("'''") {
-                return true;
-            }
         }
 
         let trimmed = content.trim();
@@ -120,10 +92,6 @@ impl PreservationRule {
     pub fn file_header() -> Self {
         PreservationRule::FileHeader
     }
-
-    pub fn shebang() -> Self {
-        PreservationRule::Shebang
-    }
 }
 
 impl PreservationRule {
@@ -138,126 +106,18 @@ impl PreservationRule {
             Self::pattern("LICENSE"),
             Self::documentation(),
             Self::file_header(),
-            Self::pattern("eslint-disable"),
-            Self::pattern("prettier-ignore"),
-            Self::pattern("//nolint"),
-            Self::pattern("# noqa"),
-            Self::pattern("type: ignore"),
-            Self::pattern("fmt: off"),
-            Self::pattern("fmt: on"),
-            Self::pattern("@ts-ignore"),
-            Self::pattern("@ts-expect-error"),
-            Self::pattern("/// <reference"),
-            Self::shebang(),
         ]
     }
 
     pub fn comprehensive_rules() -> Vec<Self> {
         let mut rules = Self::default_rules();
-        rules.extend(vec![
+        rules.extend([
             Self::pattern("BUG"),
             Self::pattern("REVIEW"),
             Self::pattern("OPTIMIZE"),
             Self::pattern("PERFORMANCE"),
             Self::pattern("SECURITY"),
             Self::pattern("DEPRECATED"),
-            Self::pattern("eslint-disable"),
-            Self::pattern("eslint-enable"),
-            Self::pattern("eslint-disable-next-line"),
-            Self::pattern("eslint-disable-line"),
-            Self::pattern("eslint-env"),
-            Self::pattern("eslint:"),
-            Self::pattern("biome-ignore"),
-            Self::pattern("biome:"),
-            Self::pattern("oxlint-ignore"),
-            Self::pattern("oxlint-disable"),
-            Self::pattern("deno-lint-ignore"),
-            Self::pattern("deno-fmt-ignore"),
-            Self::pattern("@ts-expect-error"),
-            Self::pattern("@ts-ignore"),
-            Self::pattern("@ts-nocheck"),
-            Self::pattern("@ts-check"),
-            Self::pattern("/// <reference"),
-            Self::pattern("/// <amd-module"),
-            Self::pattern("/// <amd-dependency"),
-            Self::pattern("prettier-ignore"),
-            Self::pattern("v8 ignore"),
-            Self::pattern("c8 ignore"),
-            Self::pattern("istanbul ignore"),
-            Self::pattern("node:coverage"),
-            Self::pattern("@preserve"),
-            Self::pattern("webpack:"),
-            Self::pattern("vite:"),
-            Self::pattern("rollup:"),
-            Self::pattern("esbuild:"),
-            Self::pattern("type: ignore"),
-            Self::pattern("type:ignore"),
-            Self::pattern("mypy:"),
-            Self::pattern("pyright:"),
-            Self::pattern("pyright: ignore"),
-            Self::pattern("ruff:"),
-            Self::pattern("noqa"),
-            Self::pattern("# noqa"),
-            Self::pattern("pragma:"),
-            Self::pattern("pylint: disable"),
-            Self::pattern("pylint: enable"),
-            Self::pattern("pylint:"),
-            Self::pattern("flake8:"),
-            Self::pattern("black:"),
-            Self::pattern("fmt: off"),
-            Self::pattern("fmt: on"),
-            Self::pattern("fmt:off"),
-            Self::pattern("fmt:on"),
-            Self::pattern("bandit:"),
-            Self::pattern("isort:"),
-            Self::pattern("pyre-ignore"),
-            Self::pattern("pyre-fixme"),
-            Self::pattern("frozen_string_literal:"),
-            Self::pattern("#["),
-            Self::pattern("allow("),
-            Self::pattern("deny("),
-            Self::pattern("warn("),
-            Self::pattern("forbid("),
-            Self::pattern("expect("),
-            Self::pattern("cfg("),
-            Self::pattern("#!["),
-            Self::pattern("clippy::"),
-            Self::pattern("rustfmt::"),
-            Self::pattern("#[rustfmt"),
-            Self::pattern("#![rustfmt"),
-            Self::pattern("//go:"),
-            Self::pattern("nolint"),
-            Self::pattern("//nolint"),
-            Self::pattern("golangci-lint"),
-            Self::pattern("lint:ignore"),
-            Self::pattern("gosec:"),
-            Self::pattern("gocyclo:"),
-            Self::pattern("staticcheck:"),
-            Self::pattern("exhaustive:"),
-            Self::pattern("govet:"),
-            Self::pattern("rubocop:"),
-            Self::pattern("rubocop:disable"),
-            Self::pattern("rubocop:enable"),
-            Self::pattern("reek:"),
-            Self::pattern("standard:disable"),
-            Self::pattern("standard:enable"),
-            Self::pattern("@Override"),
-            Self::pattern("@SuppressWarnings"),
-            Self::pattern("@Deprecated"),
-            Self::pattern("@Generated"),
-            Self::pattern("@SuppressFBWarnings"),
-            Self::pattern("checkstyle:"),
-            Self::pattern("//noinspection"),
-            Self::pattern("// noinspection"),
-            Self::pattern("spotbugs:"),
-            Self::pattern("trivy:ignore"),
-            Self::pattern("trivy ignore"),
-            Self::pattern("tfsec:ignore"),
-            Self::pattern("checkov:skip"),
-            Self::pattern("terrascan:skip"),
-            Self::pattern("terraform-docs:"),
-            Self::pattern("tflint-ignore:"),
-            Self::pattern("tflint:"),
             Self::pattern("#pragma"),
             Self::pattern("NOLINT"),
             Self::pattern("NOLINTNEXTLINE"),
@@ -265,11 +125,6 @@ impl PreservationRule {
             Self::pattern("clang-format on"),
             Self::pattern("cppcheck-suppress"),
             Self::pattern("coverity["),
-            Self::pattern("shellcheck disable"),
-            Self::pattern("shellcheck source"),
-            Self::pattern("hadolint ignore"),
-            Self::pattern("yamllint disable"),
-            Self::pattern("yamllint enable"),
             Self::pattern("@param"),
             Self::pattern("@return"),
             Self::pattern("@throws"),
@@ -283,18 +138,17 @@ impl PreservationRule {
             Self::pattern("@public"),
             Self::pattern("@private"),
             Self::pattern("@protected"),
-            // Dependency automation bots
-            Self::pattern("renovate:"),   // # renovate: datasource=... depName=...
-            Self::pattern("datasource="), // renovate custom-manager annotations
+            Self::pattern("renovate:"),
+            Self::pattern("datasource="),
             Self::pattern("depName="),
             Self::pattern("dependabot"),
-            // Security / quality scanners
-            Self::pattern("NOSONAR"), // SonarQube inline suppression (also promised in --help)
+            Self::pattern("swiftlint:"),
+            Self::pattern("MARK:"),
+            Self::pattern("NOSONAR"),
             Self::pattern("snyk:ignore"),
-            Self::pattern("codeql["), // CodeQL inline alert suppression
-            // Spell checkers
-            Self::pattern("cspell:"),        // cSpell: disable / ignore / words
-            Self::pattern("spell-checker:"), // Code Spell Checker alternate prefix
+            Self::pattern("codeql["),
+            Self::pattern("cspell:"),
+            Self::pattern("spell-checker:"),
             Self::pattern("codespell:ignore"),
         ]);
         rules
@@ -320,7 +174,7 @@ mod tests {
     #[test]
     fn test_pattern_rule() {
         let rule = PreservationRule::pattern("TODO");
-        let comment = create_test_comment("line_comment", 5);
+        let comment = create_test_comment("comment", 5);
         assert!(rule.matches(&comment, "// TODO: Fix this"));
         assert!(!rule.matches(&comment, "// Regular comment"));
     }
@@ -328,38 +182,27 @@ mod tests {
     #[test]
     fn test_documentation_rule() {
         let rule = PreservationRule::documentation();
-
-        let cases = vec![
-            ("/// Rust doc comment", "doc_comment", true),
-            ("/** Java doc comment */", "block_comment", true),
-            ("//! Inner doc comment", "line_comment", true),
-            ("## Python docstring", "comment", true),
-            ("// Regular comment", "line_comment", false),
+        let cases = [
+            ("/// C++ doc comment", true),
+            ("/** C doc comment */", true),
+            ("//! Swift doc comment", true),
+            ("// Regular comment", false),
         ];
-
-        for (content, node_type, expected) in cases {
-            let comment = create_test_comment(node_type, 5);
-            assert_eq!(
-                rule.matches(&comment, content),
-                expected,
-                "Failed for: {content} ({node_type})",
-            );
+        for (content, expected) in cases {
+            let comment = create_test_comment("comment", 5);
+            assert_eq!(rule.matches(&comment, content), expected, "Failed for: {content}");
         }
     }
 
     #[test]
     fn test_file_header_rule() {
         let rule = PreservationRule::file_header();
-
-        let header_comment = create_test_comment("line_comment", 0);
+        let header_comment = create_test_comment("comment", 0);
         assert!(rule.matches(&header_comment, "// Copyright 2023 Author\n// Licensed under MIT"));
-
-        let early_comment = create_test_comment("line_comment", 1);
+        let early_comment = create_test_comment("comment", 1);
         assert!(!rule.matches(&early_comment, "// Just a comment"));
-
-        let late_header = create_test_comment("line_comment", 50);
+        let late_header = create_test_comment("comment", 50);
         assert!(!rule.matches(&late_header, "// Copyright 2023 Author"));
-
         let autogenerated = create_test_comment("comment", 0);
         assert!(rule.matches(
             &autogenerated,
@@ -371,94 +214,45 @@ mod tests {
     fn test_default_rules() {
         let rules = PreservationRule::default_rules();
         assert!(!rules.is_empty());
-
-        let todo_comment = create_test_comment("line_comment", 5);
-        let matches = rules
-            .iter()
-            .any(|rule| rule.matches(&todo_comment, "// TODO: Fix this"));
-        assert!(matches);
+        let todo_comment = create_test_comment("comment", 5);
+        assert!(
+            rules
+                .iter()
+                .any(|rule| rule.matches(&todo_comment, "// TODO: Fix this"))
+        );
     }
 
     #[test]
     fn test_rule_presets() {
         let default = PreservationRule::default_rules();
         let comprehensive = PreservationRule::comprehensive_rules();
-
         assert!(default.len() <= comprehensive.len());
-
-        let todo_comment = create_test_comment("line_comment", 5);
+        let todo_comment = create_test_comment("comment", 5);
         for rules in [&default, &comprehensive] {
-            let matches = rules.iter().any(|rule| rule.matches(&todo_comment, "// TODO: Test"));
-            assert!(matches, "TODO should be preserved by all rule presets");
+            assert!(rules.iter().any(|rule| rule.matches(&todo_comment, "// TODO: Test")));
         }
     }
 
     #[test]
     fn test_linting_ignore_patterns() {
         let rules = PreservationRule::comprehensive_rules();
-
-        let test_cases = vec![
-            "// eslint-disable-next-line no-console",
-            "// biome-ignore lint/suspicious/noExplicitAny",
-            "// @ts-ignore",
-            "/* v8 ignore next */",
-            "# noqa: F401",
-            "# pylint: disable=unused-import",
-            "# rubocop:disable Metrics/LineLength",
-            "#[allow(clippy::too_many_arguments)]",
-            "//nolint:gocyclo",
-            "// @SuppressWarnings(\"unchecked\")",
-        ];
-
-        let comment = create_test_comment("line_comment", 5);
-        for content in test_cases {
-            let matches = rules.iter().any(|rule| rule.matches(&comment, content));
-            assert!(matches, "Linting ignore pattern should be preserved: {content}");
-        }
-    }
-
-    #[test]
-    fn test_coverage_ignore_patterns() {
-        let rules = PreservationRule::comprehensive_rules();
-
-        let coverage_patterns = vec![
-            "/* v8 ignore next 3 */",
-            "/* istanbul ignore next */",
-            "/* c8 ignore start */",
-            "// @preserve",
-        ];
-
-        let comment = create_test_comment("block_comment", 5);
-        for content in coverage_patterns {
-            let matches = rules.iter().any(|rule| rule.matches(&comment, content));
-            assert!(matches, "Coverage ignore pattern should be preserved: {content}");
+        let comment = create_test_comment("comment", 5);
+        for content in [
+            "// NOLINT",
+            "// swiftlint:disable all",
+            "// codeql[cpp/unsafe-use]",
+            "// cspell: disable",
+        ] {
+            assert!(rules.iter().any(|rule| rule.matches(&comment, content)));
         }
     }
 
     #[test]
     fn test_formatter_ignore_patterns() {
         let rules = PreservationRule::comprehensive_rules();
-
-        let formatter_patterns = vec!["// prettier-ignore", "# fmt: off", "# black: off"];
-
-        let comment = create_test_comment("line_comment", 5);
-        for content in formatter_patterns {
-            let matches = rules.iter().any(|rule| rule.matches(&comment, content));
-            assert!(matches, "Formatter ignore pattern should be preserved: {content}");
+        let comment = create_test_comment("comment", 5);
+        for content in ["// clang-format off", "// clang-format on"] {
+            assert!(rules.iter().any(|rule| rule.matches(&comment, content)));
         }
-    }
-
-    #[test]
-    fn test_shebang_rule() {
-        let rule = PreservationRule::shebang();
-
-        let shebang = create_test_comment("comment", 0);
-        assert!(rule.matches(&shebang, "#!/usr/bin/env bash"));
-
-        let not_first_line = create_test_comment("comment", 1);
-        assert!(rule.matches(&not_first_line, "#!/usr/bin/env bash"));
-
-        let explicit_shebang_node = create_test_comment("shebang", 0);
-        assert!(rule.matches(&explicit_shebang_node, "ignored"));
     }
 }

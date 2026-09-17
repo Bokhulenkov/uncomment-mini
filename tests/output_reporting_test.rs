@@ -22,14 +22,14 @@ fn run(file: &std::path::Path, args: &[&str]) -> Output {
 #[test]
 fn reports_removed_line_ranges_in_stdout() {
     let dir = TempDir::new().unwrap();
-    let file = dir.path().join("sample.js");
-    fs::write(&file, "// first\nconst x = 1; // second\n").unwrap();
+    let file = dir.path().join("sample.c");
+    fs::write(&file, "// first\nint x = 1; // second\n").unwrap();
 
     let output = run(&file, &["--dry-run"]);
     let stdout = String::from_utf8_lossy(&output.stdout);
 
     assert!(output.status.success(), "run failed: {stdout}");
-    assert!(stdout.contains("sample.js"), "expected file path, got: {stdout}");
+    assert!(stdout.contains("sample.c"), "expected file path, got: {stdout}");
     assert!(stdout.contains("would remove 2"), "expected count, got: {stdout}");
     assert!(stdout.contains("L1"), "expected L1, got: {stdout}");
     assert!(stdout.contains("L2"), "expected L2, got: {stdout}");
@@ -38,8 +38,8 @@ fn reports_removed_line_ranges_in_stdout() {
 #[test]
 fn shows_preservation_hint_on_stderr_when_comments_removed() {
     let dir = TempDir::new().unwrap();
-    let file = dir.path().join("sample.js");
-    fs::write(&file, "// strip me\nconst x = 1;\n").unwrap();
+    let file = dir.path().join("sample.c");
+    fs::write(&file, "// strip me\nint x = 1;\n").unwrap();
 
     let output = run(&file, &["--dry-run"]);
     let stderr = String::from_utf8_lossy(&output.stderr);
@@ -51,9 +51,9 @@ fn shows_preservation_hint_on_stderr_when_comments_removed() {
 #[test]
 fn no_hint_when_nothing_is_removed() {
     let dir = TempDir::new().unwrap();
-    let file = dir.path().join("sample.js");
+    let file = dir.path().join("sample.c");
     // A lone TODO is preserved by default, so nothing is removed.
-    fs::write(&file, "// TODO: keep me\nconst x = 1;\n").unwrap();
+    fs::write(&file, "// TODO: keep me\nint x = 1;\n").unwrap();
 
     let output = run(&file, &["--dry-run"]);
     let stderr = String::from_utf8_lossy(&output.stderr);
@@ -64,8 +64,8 @@ fn no_hint_when_nothing_is_removed() {
 #[test]
 fn quiet_suppresses_per_file_output_but_still_writes_and_summarizes() {
     let dir = TempDir::new().unwrap();
-    let file = dir.path().join("sample.js");
-    fs::write(&file, "// strip me\nconst x = 1;\n").unwrap();
+    let file = dir.path().join("sample.c");
+    fs::write(&file, "// strip me\nint x = 1;\n").unwrap();
 
     let output = run(&file, &["--quiet"]);
     let stdout = String::from_utf8_lossy(&output.stdout);
@@ -95,10 +95,10 @@ fn quiet_suppresses_per_file_output_but_still_writes_and_summarizes() {
 #[test]
 fn diff_does_not_misalign_unchanged_lines() {
     let dir = TempDir::new().unwrap();
-    let file = dir.path().join("sample.rs");
+    let file = dir.path().join("sample.c");
     fs::write(
         &file,
-        "// strip this leading comment\nfn main() {\n    let a = 1;\n    let b = 2;\n    let c = 3;\n    let keep = 42;\n    let d = 4;\n}\n",
+        "// strip this leading comment\nint main(void) {\n    int a = 1;\n    int b = 2;\n    int c = 3;\n    int keep = 42;\n    int d = 4;\n}\n",
     )
     .unwrap();
 
@@ -110,11 +110,11 @@ fn diff_does_not_misalign_unchanged_lines() {
         "the comment should be shown removed, got: {stdout}"
     );
     assert!(
-        !stdout.contains("-    let a = 1;"),
+        !stdout.contains("-    int a = 1;"),
         "unchanged code must not be marked removed (regression: old index-based diff), got: {stdout}"
     );
     assert!(
-        !stdout.contains("let keep"),
+        !stdout.contains("int keep"),
         "a line outside the context window should be hidden, got: {stdout}"
     );
 }
@@ -122,8 +122,8 @@ fn diff_does_not_misalign_unchanged_lines() {
 #[test]
 fn quiet_suppresses_important_removal_warning() {
     let dir = TempDir::new().unwrap();
-    let file = dir.path().join("sample.js");
-    fs::write(&file, "// eslint-disable-next-line\nconst x = 1;\n").unwrap();
+    let file = dir.path().join("sample.c");
+    fs::write(&file, "// NOLINTNEXTLINE\nint x = 1;\n").unwrap();
 
     let loud = run(&file, &["--dry-run", "--no-default-ignores"]);
     assert!(
@@ -131,7 +131,7 @@ fn quiet_suppresses_important_removal_warning() {
         "expected the warning without --quiet"
     );
 
-    fs::write(&file, "// eslint-disable-next-line\nconst x = 1;\n").unwrap();
+    fs::write(&file, "// NOLINTNEXTLINE\nint x = 1;\n").unwrap();
     let quiet = run(&file, &["--dry-run", "--no-default-ignores", "--quiet"]);
     assert!(
         !String::from_utf8_lossy(&quiet.stderr).contains("potentially important"),
@@ -143,19 +143,19 @@ fn quiet_suppresses_important_removal_warning() {
 #[test]
 fn diff_handles_file_without_trailing_newline() {
     let dir = TempDir::new().unwrap();
-    let file = dir.path().join("sample.rs");
-    fs::write(&file, "fn main() {} // strip").unwrap();
+    let file = dir.path().join("sample.c");
+    fs::write(&file, "int main(void) {} // strip").unwrap();
 
     let output = run(&file, &["--dry-run", "--diff"]);
     let stdout = String::from_utf8_lossy(&output.stdout);
 
     assert!(output.status.success(), "run failed: {stdout}");
     assert!(
-        stdout.contains("-fn main() {} // strip"),
+        stdout.contains("-int main(void) {} // strip"),
         "expected the original trailing-comment line, got: {stdout}"
     );
     assert!(
-        stdout.contains("+fn main() {}"),
+        stdout.contains("+int main(void) {}"),
         "expected the processed line, got: {stdout}"
     );
 }
@@ -163,8 +163,8 @@ fn diff_handles_file_without_trailing_newline() {
 #[test]
 fn diff_works_without_dry_run() {
     let dir = TempDir::new().unwrap();
-    let file = dir.path().join("sample.rs");
-    fs::write(&file, "// strip me\nfn main() {}\n").unwrap();
+    let file = dir.path().join("sample.c");
+    fs::write(&file, "// strip me\nint main(void) {}\n").unwrap();
 
     let output = run(&file, &["--diff"]);
     let stdout = String::from_utf8_lossy(&output.stdout);

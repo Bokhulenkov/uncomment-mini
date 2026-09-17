@@ -5,12 +5,12 @@ use std::path::PathBuf;
 const AFTER_LONG_HELP: &str = "Examples:
   uncomment src/                     Remove comments from every file under src/
   uncomment src/ --dry-run --diff    Preview changes as a diff, write nothing
-  uncomment main.rs --remove-doc     Also strip doc comments and docstrings
+  uncomment main.c --remove-doc     Also strip documentation comments
   uncomment . -j 0                   Process the whole tree using all CPU cores
   uncomment init                     Generate a .uncommentrc.toml for this project
 
-Preserved by default: TODO, FIXME, HACK, XXX, NOSONAR, the ~keep marker, doc
-comments, and linting directives (eslint-disable, clippy::, noqa, ...). Override
+Preserved by default: TODO, FIXME, HACK, NOSONAR, the ~keep marker, doc
+comments, and linting directives (clang-format, swiftlint:, NOLINT, ...). Override
 with the flags above or a .uncommentrc.toml (see `uncomment init`).";
 
 #[derive(Parser, Debug)]
@@ -20,8 +20,7 @@ with the flags above or a .uncommentrc.toml (see `uncomment init`).";
     about = "Strip comments from source code — accurately, via tree-sitter.",
     long_about = "uncomment removes comments from source code using tree-sitter AST parsing, so it \
                   is 100% accurate and never touches comment-like text inside strings. It preserves \
-                  what matters by default — TODO/FIXME, docs, and linting directives — across 300+ \
-                  languages, with parallel processing and a safe dry-run mode.",
+                  what matters by default — TODO/FIXME, docs, and linting directives — across C, C++, Objective-C, and Swift, with parallel processing and a safe dry-run mode.",
     styles = crate::ui::clap_styles(),
     after_long_help = AFTER_LONG_HELP
 )]
@@ -84,7 +83,7 @@ pub struct ProcessArgs {
     #[arg(
         short = 'd',
         long,
-        help = "Remove documentation comments and docstrings",
+        help = "Remove documentation comments",
         help_heading = "Comment selection"
     )]
     pub remove_doc: bool,
@@ -99,10 +98,10 @@ pub struct ProcessArgs {
     )]
     pub ignore_patterns: Vec<String>,
 
-    /// Disable automatic preservation of linting directives
+    /// Disable automatic preservation patterns
     #[arg(
         long = "no-default-ignores",
-        help = "Disable built-in preservation patterns (ESLint, Clippy, etc.)",
+        help = "Disable built-in preservation patterns (NOLINT, swiftlint, etc.)",
         help_heading = "Comment selection"
     )]
     pub no_default_ignores: bool,
@@ -213,7 +212,7 @@ impl Cli {
         }
 
         let (template, detected_info) = if comprehensive {
-            (crate::config::Config::comprehensive_template_clean(), None)
+            (crate::config::Config::template_clean(), None)
         } else if interactive {
             (crate::config::Config::interactive_template_clean()?, None)
         } else {
@@ -234,7 +233,7 @@ impl Cli {
 
         if comprehensive {
             anstream::println!(
-                "{} Generated comprehensive config with 15+ language configurations",
+                "{} Generated comprehensive config for four languages",
                 ui::dim(ui::BULLET)
             );
         } else if interactive {
