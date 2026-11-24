@@ -1,0 +1,13 @@
+[package]
+name = "tree-sitter-c"
+version = "0.24.2"
+edition = "2021"
+license = "MIT"
+description = "Vendored C tree-sitter grammar"
+build = "build.rs"
+
+[dependencies]
+tree-sitter-language = "0.1"
+
+[build-dependencies]
+cc = "1.2"

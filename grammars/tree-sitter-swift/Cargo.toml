@@ -1,0 +1,13 @@
+[package]
+name = "tree-sitter-swift"
+version = "0.7.1"
+edition = "2021"
+license = "MIT"
+description = "Vendored Swift tree-sitter grammar"
+build = "build.rs"
+
+[dependencies]
+tree-sitter-language = "0.1"
+
+[build-dependencies]
+cc = "1.2"
