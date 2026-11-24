@@ -1,91 +1,93 @@
 # uncomment
 
-Утилита на Rust. Удаляет комментарии через tree-sitter и изменяет
-исходники непосредственно в указанном файле или каталоге.
+This project is based on [polylint/uncomment](https://github.com/polylint/uncomment).
+
+A Rust utility that removes comments using tree-sitter and modifies source files
+in place in the specified file or directory.
 
 ```sh
 cargo build --release --locked
-./target/release/uncomment /путь/к/проекту
+./target/release/uncomment /path/to/project
 ```
 
-Для сборки нужны Rust и C-компилятор.  
-Готовому бинарнику Rust, исходники утилиты и сеть не нужны.
+Building requires Rust and a C compiler.
+The compiled binary does not require Rust, the utility's source code, or network access to run.
 
-## Файлы
+## Supported file types
 
-Обрабатываются только расширения в нижнем регистре:
+Only the following lowercase file extensions are processed:
 
-| Расширение | Грамматика  |
-| ---------- | ----------- |
-| `.h`       | C           |
-| `.m`       | Objective-C |
-| `.mm`      | C++         |
-| `.swift`   | Swift       |
+| Extension | Grammar     |
+| --------- | ----------- |
+| `.h`      | C           |
+| `.m`      | Objective-C |
+| `.mm`     | C++         |
+| `.swift`  | Swift       |
 
-Остальные файлы пропускаются. При обходе каталога учитываются `.gitignore`,
-пропускаются `.git` и вложенные Git-репозитории. Скрытые каталоги обрабатываются,
-если они не исключены через `.gitignore`. Символические ссылки при обходе не раскрываются.
+Other files are skipped. Directory traversal respects `.gitignore` rules and skips
+`.git` directories and nested Git repositories. Hidden directories are processed
+unless excluded by `.gitignore`. Symbolic links are not followed during traversal.
 
-## Правила
+## Preservation rules
 
-Единственный источник правил — `src/rules/preservation.rs`:
+The single source of truth for preservation rules is `src/rules/preservation.rs`:
 
-- Сохраняются документационные комментарии `///`, `/**`, `//!`.
-- Сохраняются комментарии, содержащие текст из `PRESERVE_PATTERNS`:
-`HACK`, `WORKAROUND`, `~keep`. Поиск чувствителен к регистру.
-- `~keep` сохраняет непрерывный блок соседних комментариев; код или пустая строка
-заканчивают блок. `// ~keep: Sample comment`  
-- В C/Objective-C/C++ сохраняются комментарии после препроцессорных директив.
-- TODO, FIXME, MARK, NOTE: удаляются, если комментарий не защищён одним
-из правил выше. Стандартных исключений для линтеров нет.
+- Documentation comments starting with `///`, `/**`, or `//!` are preserved.
+- Comments containing text from `PRESERVE_PATTERNS` are preserved:
+  `HACK`, `WORKAROUND`, `~keep`. Matching is case-sensitive.
+- `~keep` preserves a contiguous block of adjacent comments; code or a blank line
+  ends the block. Example: `// ~keep: Sample comment`.
+- In C, Objective-C, and C++, comments following preprocessor directives are preserved.
+- TODO, FIXME, MARK, and NOTE comments are removed unless protected by one of the
+  rules above. There are no default exceptions for linter directives.
 
-Чтобы добавить сохраняемый текст, измените `PRESERVE_PATTERNS` и пересоберите бинарник.
+To preserve additional text, update `PRESERVE_PATTERNS` and rebuild the binary.
 
-## Ручной запуск на Mac
+## Running locally on macOS
 
-Соберите бинарник для архитектуры текущего Mac
+Build the binary for the current Mac's architecture:
 
 ```sh
 cargo build --release --locked
 ```
 
-Готовый бинарник — `target/release/uncomment`. Его можно скопировать в каталог
-из `PATH` и запускать как `uncomment <путь>`.
+The compiled binary is `target/release/uncomment`. Copy it to a directory in `PATH`
+to run it as `uncomment <path>`.
 
-### Очистка после сборки
+### Cleaning up after a build
 
-Чтобы освободить место после успешной сборки, выполните из корня проекта утилиты:
+To free disk space after a successful build, run the following from the utility's project root:
 
 ```sh
 cp target/release/uncomment ./uncomment && cargo clean
 ```
 
-Команда сохраняет бинарник в корне проекта и после успешного копирования удаляет
-результаты сборки из `target`, включая `debug`, `release` и промежуточные файлы.
-Исходники и сохранённый бинарник остаются. Запуск после очистки:
+This command saves the binary in the project root and, after a successful copy,
+removes build artifacts from `target`, including `debug`, `release`, and intermediate files.
+The source code and the copied binary remain. Run the utility after cleanup with:
 
 ```sh
-./uncomment /путь/к/проекту
+./uncomment /path/to/project
 ```
 
-Без предварительного копирования `cargo clean` удалит и готовый бинарник из `target`.
-Следующая сборка заново создаст необходимые файлы и займёт больше времени.
+Without copying the binary first, `cargo clean` also deletes the compiled binary from `target`.
+The next build recreates the necessary files and takes longer.
 
-## Результат запуска
+## Output and errors
 
-Команда печатает число обработанных и изменённых файлов.
-Ошибки чтения, обработки, обхода или записи завершают команду с ненулевым кодом.
-Уже записанные файлы при последующей ошибке не откатываются.
-Повторный запуск не перезаписывает файлы, если результат не меняется.
+The command prints the number of processed and modified files.
+Read, processing, traversal, or write errors cause the command to exit with a nonzero status.
+Files already written are not rolled back if a later error occurs.
+Subsequent runs do not rewrite files whose contents would remain unchanged.
 
-## Запуск через GitLab CI/CD
+## Running in GitLab CI/CD
 
-Разместите готовый бинарник `uncomment` в хранилище, доступном Runner, и задайте
-CI/CD-переменную `UNCOMMENT_BINARY_URL` с прямой ссылкой на этот файл.
-Бинарник должен быть собран для ОС и архитектуры Runner.
+Host the compiled `uncomment` binary in storage accessible to the runner and set
+the CI/CD variable `UNCOMMENT_BINARY_URL` to a direct download URL for that file.
+The binary must be built for the runner's operating system and architecture.
 
-В `.gitlab-ci.yml` добавьте команды в `before_script` существующей job сборки
-приложения. Если `before_script` уже используется, дополните его:
+In `.gitlab-ci.yml`, add these commands to `before_script` in the existing application
+build job. If `before_script` is already defined, append the commands to it:
 
 ```yaml
 before_script:
@@ -95,6 +97,6 @@ before_script:
   - '"$CI_PROJECT_DIR/.ci-tools/uncomment" "$CI_PROJECT_DIR"'
 ```
 
-`CI_PROJECT_DIR` — рабочий каталог проекта приложения в job. Утилита изменяет  
-исходники в нём, затем `script` этой же job собирает приложение из очищенных файлов.  
-При ошибке скачивания или обработки job завершается до начала сборки.
+`CI_PROJECT_DIR` is the application's working directory in the job. The utility modifies
+the source files there, then `script` in the same job builds the application from the cleaned files.
+If downloading or processing fails, the job stops before the build starts.
